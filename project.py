@@ -1,4 +1,5 @@
 import sqlite3
+from tabulate import tabulate
 
 # conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
 conn = sqlite3.connect('./project.db')
@@ -14,61 +15,74 @@ def create_table_com():
 def details():
     while True:
         try:
-            sid = input("PROJECT ID:        ")
-            sti = input("PROJECT TITLE:     ")
-            ssi = input("PROJECT SIZE:      ")
-            spr = input("PROJECT PRIORITY:  ")
+            sid = input("PROJECT ID:       ")
+            sti = input("PROJECT TITLE:    ")
+            ssi = input("PROJECT SIZE:     ")
+            spr = input("PROJECT PRIORITY: ")
+            print(sid, sti, ssi, spr)
             if (sid.isdigit() == True and ssi.isdigit() and spr.isdigit() == True):
-                c.execute("INSERT INTO project_inc (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (sid, sti, ssi,spr))
-                conn.commit()
-                print("Project has been saved!")
+                temp = c.execute("SELECT ID FROM project_inc WHERE ID=?", sid)
+                length = len(list(temp))
+                print(length)
+                if length > 0:
+                    raise Exception
+                else:
+                    c.execute("INSERT INTO project_inc (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (sid, sti, ssi,spr))
+                    conn.commit()
+                    print("Project has been saved!")
                 break
             else:
                 raise ValueError
         except ValueError:
-            print("Incorrect Input")
+            print("!!! Incorrect Input !!!")
+        except Exception:
+            print("Project ID already exist. Please use a new one.")
+            print("-----------------------------")
 
 def view():
     while(True):
-        print("-View Projects")
-        print("--1. One Project")
-        print("--2. Completed Project")
-        print("--3. All Projects")
+        print("### View Projects ###")
+        print("1. One Project")
+        print("2. Completed Project")
+        print("3. All Projects")
         try: 
             x = int(input("Chooose: "))
             if int(x) < 0:
-                raise out_of_range_exp("Error")
+                raise out_of_range_exp("!!! Error !!!")
             else:
+                print("-------------------------------------------")
+                arr = []
                 if int(x) == 1:
                     id = input("ID Number: ")
                     sql = "SELECT ID, TITLE, SIZE, PRIORITY FROM project_inc where ID = ?"
+                    x = c.execute(sql, [(id)])
+                    print(len(list(x)))
+
                     for row in c.execute(sql, [(id)]):
-                        print ("=>PROJECT ID:       " + str(row[0]))
-                        print ("PROJECT TITLE:      " + str(row[1]))
-                        print ("PROJECT SIZE:       " + str(row[2]))
-                        print ("PROJECT PRIORITY:   " + str(row[3]))
+                        
+                        # print("PROJECT ID:       " + str(row[0]))
+                        # print("PROJECT TITLE:      " + str(row[1]))
+                        # print("PROJECT SIZE:       " + str(row[2]))
+                        # print("PROJECT PRIORITY:   " + str(row[3]))
+                        print(tabulate(row, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
                         break
                 elif int(x) == 2:
                     sql = "SELECT * FROM project_com"
                     for row in c.execute(sql):
-                        print ("=>PROJECT ID:       " + str(row[0]))
-                        print ("PROJECT TITLE:      " + str(row[1]))
-                        print ("PROJECT SIZE:       " + str(row[2]))
-                        print ("PROJECT PRIORITY:   " + str(row[3]))
-                    break
+                        arr.append(row)
+                    print(tabulate(arr, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
                 elif int(x) == 3:
                     sql = "SELECT * FROM project_inc"
                     # ORDER BY PRIORITY ASC, SIZE ASC
                     for row in c.execute(sql):
-                        print ("=>PROJECT ID:       " + str(row[0]))
-                        print ("PROJECT TITLE:      " + str(row[1]))
-                        print ("PROJECT SIZE:       " + str(row[2]))
-                        print ("PROJECT PRIORITY:   " + str(row[3]))
-                    break
+                        arr.append(row)
+                    print(tabulate(arr, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+                print("-------------------------------------------")
+                break
         except out_of_range_exp as e:
             print(e)
         except ValueError:
-            print("CHOOSE BETWEEN 1-3")
+            print("!!! CHOOSE BETWEEN 1-3 !!!")
 
 def schedule():
     while(True):
@@ -90,7 +104,7 @@ def schedule():
         except out_of_range_exp as e:
             print(e)
         except ValueError:
-            print("CHOOSE BETWEEN 1-2") 
+            print("!!! CHOOSE BETWEEN 1-2 !!!") 
         break  
 
 def get_project():
@@ -133,5 +147,7 @@ while(True):
     except out_of_range_exp as e:
         print(e)
     except ValueError:
-        print("CHOOSE BETWEEN 1-5")
+        print("!!! CHOOSE BETWEEN 1-5 !!!")
     print('-------------------------------------')
+
+c.close()
