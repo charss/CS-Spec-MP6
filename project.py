@@ -1,5 +1,9 @@
+# Mam pip install tabulate muna kayo sa cmd para gumana
+# or yung command sa anaconda
+
 import sqlite3
 from tabulate import tabulate
+
 import os
 # conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
 conn = sqlite3.connect('./project.db')
@@ -109,19 +113,13 @@ def schedule():
             if x < 0 or x > 3:
                 raise OutOfBounds
             if x == 1:
-                sql = "SELECT * FROM project_inc ORDER BY PRIORITY ASC, SIZE ASC"
+                sql = "SELECT * FROM project_inc ORDER BY PRIORITY DESC, SIZE DESC"
                 for row in c.execute(sql):
-                    queue.append((row[0], row[1], row[2], row[3]))
+                    queue.append([row[0], row[1], row[2], row[3]])
             elif x == 2:
                 if queue == []:
                     raise CustomError
-                for row in queue:
-                    print(row)
-                    print(tabulate(row, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
-                    # print ("=>PROJECT ID:       " + str(queue[i][0]))
-                    # print ("PROJECT TITLE:      " + str(queue[i][1]))
-                    # print ("PROJECT SIZE:       " + str(queue[i][2]))
-                    # print ("PROJECT PRIORITY:   " + str(queue[i][3]))
+                print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
             elif x == 3:
                 break
         except ValueError:
@@ -133,14 +131,19 @@ def schedule():
 
 
 def get_project():
-    print ("=>PROJECT ID:       " + str(queue[0][0]))
-    print ("PROJECT TITLE:      " + str(queue[0][1]))
-    print ("PROJECT SIZE:       " + str(queue[0][2]))
-    print ("PROJECT PRIORITY:   " + str(queue[0][3]))
-    c.execute("INSERT INTO project_com (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (queue[0][0], queue[0][1], queue[0][2],queue[0][3]))
-    c.execute("DELETE FROM project_inc WHERE ID = ?", (queue[0][0],))
-    conn.commit()
-    queue.pop()
+    print('### Get a Project ###')
+    if queue == []:
+        print('!!! No schedule created. Create one first. !!!')
+    else:
+        print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+        print('The top most project is removed')
+        get_sched = queue.pop(0)
+        c.execute("INSERT INTO project_com (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (get_sched[0], get_sched[1], get_sched[2], get_sched[3]))
+        print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+        
+        c.execute("DELETE FROM project_inc WHERE ID = ?", (get_sched[0],))
+        conn.commit()
+        # queue.pop()
 
 while(True):
     print('### MAIN MENU ###')
