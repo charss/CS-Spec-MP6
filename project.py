@@ -1,6 +1,7 @@
 import sqlite3
 
-conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
+# conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
+conn = sqlite3.connect('./project.db')
 c = conn.cursor()
 queue = []
 
@@ -106,6 +107,7 @@ class out_of_range_exp(Exception):
     pass
 
 while(True):
+    print('### MAIN MENU ###')
     print("1. Input Project Details")
     print("2. View Projects")
     print("3. Schedule Projects")
@@ -132,3 +134,4 @@ while(True):
         print(e)
     except ValueError:
         print("CHOOSE BETWEEN 1-5")
+    print('-------------------------------------')
