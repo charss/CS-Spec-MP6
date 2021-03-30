@@ -1,6 +1,10 @@
+# Mam pip install tabulate muna kayo sa cmd para gumana
+# or yung command sa anaconda
+
 import sqlite3
 from tabulate import tabulate
 
+import os
 # conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
 conn = sqlite3.connect('./project.db')
 c = conn.cursor()
@@ -9,116 +13,137 @@ queue = []
 def create_table_inc():
     c.execute("CREATE TABLE IF NOT EXISTS project_inc (ID INT, TITLE VARCHAR, SIZE INT, PRIORITY INT)")
 
+
 def create_table_com():
     c.execute("CREATE TABLE IF NOT EXISTS project_com (ID INT, TITLE VARCHAR, SIZE INT, PRIORITY INT)")
 
+
+def check_id(project_id):
+    temp = c.execute("SELECT ID FROM project_inc WHERE ID=?", [project_id])
+    arr = list(temp)
+    return len(arr)
+
+
+class Error(Exception):
+    pass
+
+
+class CustomError(Error):
+    pass
+
+
+class OutOfBounds(Error):
+    pass
+
+
+def printTable(sql):
+    arr = []
+    for row in c.execute(sql):
+        arr.append(row)
+    print(tabulate(arr, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+
+
 def details():
+    # For inputing new project details 
     while True:
+        print("### INPUT PROJECT DETAILS ###")
         try:
-            sid = input("PROJECT ID:       ")
-            sti = input("PROJECT TITLE:    ")
-            ssi = input("PROJECT SIZE:     ")
-            spr = input("PROJECT PRIORITY: ")
-            print(sid, sti, ssi, spr)
-            if (sid.isdigit() == True and ssi.isdigit() and spr.isdigit() == True):
-                temp = c.execute("SELECT ID FROM project_inc WHERE ID=?", sid)
-                length = len(list(temp))
-                print(length)
-                if length > 0:
-                    raise Exception
-                else:
-                    c.execute("INSERT INTO project_inc (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (sid, sti, ssi,spr))
-                    conn.commit()
-                    print("Project has been saved!")
-                break
-            else:
-                raise ValueError
+            project_id = int(input("PROJECT ID:       "))
+            if check_id(project_id) > 0:
+                raise CustomError
+            project_title = input("PROJECT TITLE:    ")
+            project_size = int(input("PROJECT SIZE:     "))
+            project_priority = int(input("PROJECT PRIORITY: "))
+            c.execute("INSERT INTO project_inc (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (project_id, project_title, project_size, project_priority))
+            conn.commit()
+            print("Project has been saved!")
+            break
         except ValueError:
             print("!!! Incorrect Input !!!")
-        except Exception:
-            print("Project ID already exist. Please use a new one.")
-            print("-----------------------------")
+        except CustomError:
+            print("!!! Project ID already exist. Please use a new one. !!!")
+            
 
 def view():
-    while(True):
+    # For viewing the projects and its details
+    while True:
         print("### View Projects ###")
         print("1. One Project")
         print("2. Completed Project")
         print("3. All Projects")
+        print("4. Back")
         try: 
-            x = int(input("Chooose: "))
-            if int(x) < 0:
-                raise out_of_range_exp("!!! Error !!!")
-            else:
-                print("-------------------------------------------")
-                arr = []
-                if int(x) == 1:
-                    id = input("ID Number: ")
-                    sql = "SELECT ID, TITLE, SIZE, PRIORITY FROM project_inc where ID = ?"
-                    x = c.execute(sql, [(id)])
-                    print(len(list(x)))
-
-                    for row in c.execute(sql, [(id)]):
-                        
-                        # print("PROJECT ID:       " + str(row[0]))
-                        # print("PROJECT TITLE:      " + str(row[1]))
-                        # print("PROJECT SIZE:       " + str(row[2]))
-                        # print("PROJECT PRIORITY:   " + str(row[3]))
-                        print(tabulate(row, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
-                        break
-                elif int(x) == 2:
-                    sql = "SELECT * FROM project_com"
-                    for row in c.execute(sql):
+            x = int(input("Choose: "))
+            arr = []
+            if x < 0 or x > 4:
+                raise OutOfBounds
+            if x == 1:
+                project_id = int(input("ID Number: "))
+                if check_id(project_id) <= 0:
+                    raise CustomError
+                else:
+                    for row in c.execute("SELECT * FROM project_inc WHERE ID=?", [project_id]):
                         arr.append(row)
                     print(tabulate(arr, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
-                elif int(x) == 3:
-                    sql = "SELECT * FROM project_inc"
-                    # ORDER BY PRIORITY ASC, SIZE ASC
-                    for row in c.execute(sql):
-                        arr.append(row)
-                    print(tabulate(arr, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
-                print("-------------------------------------------")
+            elif x == 2:
+                sql = "SELECT * FROM project_com"
+                printTable(sql)
+            elif x == 3:
+                sql = "SELECT * FROM project_inc"
+                # ORDER BY PRIORITY ASC, SIZE ASC
+                printTable(sql)
+            elif x == 4:
                 break
-        except out_of_range_exp as e:
-            print(e)
         except ValueError:
-            print("!!! CHOOSE BETWEEN 1-3 !!!")
+            print('!!! INVALID INPUT !!!')
+        except OutOfBounds:
+            print('!!! CHOOSE BETWEEN 1-4 !!!')
+        except CustomError:
+            print('!!! Project ID does not exist. !!!')
 
 def schedule():
-    while(True):
+    # For Sceduling of projects
+    while True:
+        print("### Schedule Projects ###")
+        print("1. Create Schedule")
+        print("2. View Updated Schedule")
+        print("3. Back")
         try: 
-            x = int(input("Chooose: "))
-            if int(x) < 0:
-                raise out_of_range_exp("Error")
-            else:
-                if int(x) == 1:
-                    sql = "SELECT * FROM project_inc ORDER BY PRIORITY ASC, SIZE ASC"
-                    for row in c.execute(sql):
-                        queue.append((row[0],row[1],row[2],row[3]))
-                elif int(x) == 2:
-                    for i in range(len(queue)):
-                        print ("=>PROJECT ID:       " + str(queue[i][0]))
-                        print ("PROJECT TITLE:      " + str(queue[i][1]))
-                        print ("PROJECT SIZE:       " + str(queue[i][2]))
-                        print ("PROJECT PRIORITY:   " + str(queue[i][3]))                  
-        except out_of_range_exp as e:
-            print(e)
+            x = int(input("Choose: "))
+            if x < 0 or x > 3:
+                raise OutOfBounds
+            if x == 1:
+                sql = "SELECT * FROM project_inc ORDER BY PRIORITY DESC, SIZE DESC"
+                for row in c.execute(sql):
+                    queue.append([row[0], row[1], row[2], row[3]])
+            elif x == 2:
+                if queue == []:
+                    raise CustomError
+                print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+            elif x == 3:
+                break
         except ValueError:
-            print("!!! CHOOSE BETWEEN 1-2 !!!") 
-        break  
+            print('!!! INVALID INPUT !!!')
+        except OutOfBounds:
+            print('!!! CHOOSE BETWEEN 1-3 !!!')
+        except CustomError:
+            print('!!! No schedule created. Create one first. !!!')
+
 
 def get_project():
-    print ("=>PROJECT ID:       " + str(queue[0][0]))
-    print ("PROJECT TITLE:      " + str(queue[0][1]))
-    print ("PROJECT SIZE:       " + str(queue[0][2]))
-    print ("PROJECT PRIORITY:   " + str(queue[0][3]))
-    c.execute("INSERT INTO project_com (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (queue[0][0], queue[0][1], queue[0][2],queue[0][3]))
-    c.execute("DELETE FROM project_inc WHERE ID = ?", (queue[0][0],))
-    conn.commit()
-    queue.pop()
-
-class out_of_range_exp(Exception):
-    pass
+    print('### Get a Project ###')
+    if queue == []:
+        print('!!! No schedule created. Create one first. !!!')
+    else:
+        print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+        print('The top most project is removed')
+        get_sched = queue.pop(0)
+        c.execute("INSERT INTO project_com (ID, TITLE, SIZE, PRIORITY) VALUES (?, ?, ?, ?)", (get_sched[0], get_sched[1], get_sched[2], get_sched[3]))
+        print(tabulate(queue, headers=['ID', 'TITLE', 'SIZE', 'PRIORITY']))
+        
+        c.execute("DELETE FROM project_inc WHERE ID = ?", (get_sched[0],))
+        conn.commit()
+        # queue.pop()
 
 while(True):
     print('### MAIN MENU ###')
@@ -130,24 +155,20 @@ while(True):
     create_table_inc()
     create_table_com()
     try: 
-        x = int(input("Chooose: "))
-        if int(x) < 0:
-            raise out_of_range_exp("Error")
-        else:
-            if int(x) == 1:
-                details()
-            elif int(x) == 2:
-                view()   
-            elif int(x) == 3:
-                schedule()
-            elif int(x) == 4:
-                get_project()   
-            elif int(x) == 5:
-                break
-    except out_of_range_exp as e:
-        print(e)
+        x = int(input("Choose: "))
+        if x < 1 or x > 5:
+            raise ValueError
     except ValueError:
-        print("!!! CHOOSE BETWEEN 1-5 !!!")
-    print('-------------------------------------')
+        print('!!! CHOOSE BETWEEN 1-5 !!!')
+    if x == 1:
+        details()
+    elif x == 2:
+        view()   
+    elif x == 3:
+        schedule()
+    elif x == 4:
+        get_project()   
+    elif x == 5:
+        break
 
 c.close()
