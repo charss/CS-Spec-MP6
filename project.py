@@ -1,10 +1,22 @@
-# Mam pip install tabulate muna kayo sa cmd para gumana
-# or yung command sa anaconda
+# if di gumana yung python script to install yung tabulate module
+# pa-install nalang po mam
+
+# cmd > pip install tabulate
 
 import sqlite3
-from tabulate import tabulate
-
 import os
+import sys
+import pip
+
+def install(package):
+    pip.main(['install', package])
+
+try:
+    from tabulate import tabulate
+except ImportError:
+    print('pycurl is not installed, installing it now!')
+    install('tabulate')
+
 # conn = sqlite3.connect('C:/Users/Awilix/Desktop/Python MP6/Project.db')
 conn = sqlite3.connect('./project.db')
 c = conn.cursor()
