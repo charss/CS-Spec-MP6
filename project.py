@@ -137,7 +137,7 @@ def schedule():
                 raise OutOfBounds
             if x == 1:
                 queue = []
-                sql = "SELECT * FROM project_inc ORDER BY PRIORITY DESC, SIZE DESC"
+                sql = "SELECT * FROM project_inc ORDER BY PRIORITY ASC, SIZE ASC"
                 for row in c.execute(sql):
                     queue.append([row[0], row[1], row[2], row[3]])
                 print('Successfully created a schedule')
